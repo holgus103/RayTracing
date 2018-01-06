@@ -3,8 +3,8 @@
 #define VS_SHADERMODEL vs_4_0
 #define PS_SHADERMODEL ps_4_0
 #else
-#define VS_SHADERMODEL vs_4_0_level_9_1
-#define PS_SHADERMODEL ps_4_0_level_9_1
+#define VS_SHADERMODEL vs_4_0_level_9_3
+#define PS_SHADERMODEL ps_4_0_level_9_3
 #endif
 
 
@@ -22,6 +22,7 @@ struct VertexShaderInputTx
 struct VertexShaderOutput
 {
 	float4 Position : SV_POSITION;
+	float3 WorldPosition : TEXCOORD0;
 	float3 Normal : NORMAL0;
 };
 
@@ -32,23 +33,19 @@ VertexShaderOutput MainVS(in VertexShaderInputTx input)
 	float4 worldPosition = mul(input.Position, World);
 	float4 viewPosition = mul(worldPosition, View);
 	output.Position = mul(viewPosition, Projection);
+	output.WorldPosition = output.Position;
 	output.Normal = input.Normal;
 
 	return output;
 }
 
-float4 MainPS(VertexShaderOutput input) : COLOR
-{
-	float3 d = input.Position - CameraPosition;
-	return float4(1, 0, 0, 1);
-}
 
 float getDelta(float a, float b, float c)
 {
 	return b*b - 4 * a*c;
 }
 
-float3 findIntersection(float3 cam, float3 d)
+void findIntersection(float3 cam, float3 d, out float t1, out float t2)
 {
 	float b = 2 * cam.x * d.x + 2 * cam.y * d.y + 2 * cam.z * d.z;
 	float a = d.x * d.x + d.y * d.y + d.z * d.z;
@@ -57,15 +54,13 @@ float3 findIntersection(float3 cam, float3 d)
 	if (delta >= 0)
 	{
 		float sd = sqrt(delta);
-		float t1 = (-b + sd) / a;
-		float t2 = (-b - sd) / a;
-		if (t1 < t2)
+		t1 = (-b + sd) / a;
+		t2 = (-b - sd) / a;
+		if (t1 > t2)
 		{
-			return cam + d * t1;
-		}
-		else
-		{
-			return cam + d * t2;
+			float3 temp = t2;
+			t2 = t1;
+			t1 = temp;
 		}
 	}
 	else
@@ -74,7 +69,12 @@ float3 findIntersection(float3 cam, float3 d)
 	}
 }
 
-float3 findQubicSolution(float3 cam, float3 d) 
+bool belongs(float z0, float t1, float t2)
+{
+	return ((z0 - t2)*(z0 - t1) <= 0);
+}
+
+void findQubicSolution(float3 cam, float3 d, float t1, float t2, out float z) 
 {
 	float a3 = 4 * d.x * d.x * d.x 
 		- 4 * d.z * d.z * d.z 
@@ -127,15 +127,98 @@ float3 findQubicSolution(float3 cam, float3 d)
 	if (D < 0)
 	{
 		float theta = acos(R / sqrt(-Q * Q * Q));
-		float3 z0 = 2 * sqrt(-Q) * cos(theta / 3) - (b2 * b2) / 3;
-		float3 z1 = 2 * sqrt(-Q) * cos(theta / 3 + 2 * PI / 3) - (b2 * b2) / 3;
-		float3 z2 = 2 * sqrt(-Q) * cos(theta / 3 + 4 * PI / 3) - (b2 * b2) / 3;
+		float z0 = 2 * sqrt(-Q) * cos(theta / 3) - (b2 * b2) / 3;
+		float z1 = 2 * sqrt(-Q) * cos(theta / 3 + 2 * PI / 3) - (b2 * b2) / 3;
+		float z2 = 2 * sqrt(-Q) * cos(theta / 3 + 4 * PI / 3) - (b2 * b2) / 3;
+
+		// really embarassing sorting
+		if (z0 > z1)
+		{
+			float tmp = z0;
+			z0 = z1;
+			z1 = tmp;
+		}
+
+		if (z1 > z2)
+		{
+			float tmp = z1;
+			z1 = z2;
+			z2 = tmp;
+		}
+
+		if (z0 > z1)
+		{
+			float tmp = z0;
+			z0 = z1;
+			z1 = tmp;
+		}
+
+		if (belongs(z0, t1, t2))
+		{
+			z = z0;
+		}
+
+		if (belongs(z1, t1, t2))
+		{
+			z = z1;
+		}
+
+		if (belongs(z2, t1, t2))
+		{
+			z = z2;
+		}
+		discard;
+
 	}
 	else
 	{
-		float3 z0 = pow(R + sqrt(D), 1 / 3) + pow(R - sqrt(D), 1 / 3) - b2 / 3;
+		float bp = R + sqrt(D);
+		float bm = R - sqrt(D);
+		float rtp;
+		float rtm;
+		if (bp < 0)
+			rtp = -pow(-bp, 1 / 3);
+		else
+			rtp = pow(bp, 1 / 3);
+
+		if (bm < 0)
+			rtm = -pow(-bm, 1 / 3);
+		else
+			rtm = pow(bm, 1 / 3);
+		float z0 = rtp + rtm - b2 / 3;
+		if (belongs(z0, t1, t2))
+		{
+			z = z0;
+		}
+		else
+		{
+			discard;
+		}
 	}
 
+}
+
+float3 getNormal(float3 p)
+{
+	float dx = 6 * (2 * p.x * p.x + 2 * p.x - 2 * p.y * p.y + p.x * p.z);
+	float dy = 6 * (-4 * p.x * p.y - 2 * p.y + p.y * p.z);
+	float dz = 3 * p.x * p.x + 3 * p.y * p.y - 21 * p.z * p.z - 8 * p.z - 3;
+	return float3(dx, dy, dz);
+}
+
+float4 MainPS(VertexShaderOutput input) : COLOR
+{
+	float3 d = input.WorldPosition - CameraPosition;
+	float t1;
+	float t2;
+	findIntersection(CameraPosition, d, t1, t2);
+	float t;
+	findQubicSolution(CameraPosition, d, t1, t2, t);
+	float3 p = CameraPosition + d * t;
+	float3 v = normalize(-d);
+	float3 n = getNormal(p);
+
+	return float4(1, 0, 0, 1) * (0.1 + 0.4 * abs(dot(n, v)) + 0.5 * pow(abs(dot(n, v)), 20));
 }
 
 technique BasicColorDrawing
