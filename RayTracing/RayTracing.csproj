@@ -9,8 +9,8 @@
     <ProjectGuid>{CCF366A7-25BE-4493-B6E6-3E8D50570C22}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RayRracing</RootNamespace>
-    <AssemblyName>RayRracing</AssemblyName>
+    <RootNamespace>RayTracing</RootNamespace>
+    <AssemblyName>RayTracing</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MonoGamePlatform>Windows</MonoGamePlatform>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -41,13 +41,16 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Camera.cs" />
+    <Compile Include="Effects\RayTracingEffect.cs" />
     <Compile Include="Objects\Sphere.cs" />
     <Compile Include="RayTracing.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="3DGraphics.Core">
+      <HintPath>..\..\3DGraphics\3DGraphics.Core\bin\Windows\x86\Debug\3DGraphics.Core.dll</HintPath>
+    </Reference>
     <Reference Include="MonoGame.Framework">
       <HintPath>$(MonoGameInstallDirectory)\MonoGame\v3.0\Assemblies\Windows\MonoGame.Framework.dll</HintPath>
     </Reference>

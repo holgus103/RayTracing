@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RayRracing
+namespace RayTracing
 {
 #if WINDOWS || LINUX
     /// <summary>
