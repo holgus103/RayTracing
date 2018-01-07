@@ -15,6 +15,7 @@ namespace RayTracing
         protected override void Initialize()
         {
             this.elements.Add(new Sphere(this.Content, new Vector3(0, 0, 0), 4));
+            this.camera.Speed = 0.01f;
         }
     }
 }

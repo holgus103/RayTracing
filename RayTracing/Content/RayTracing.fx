@@ -33,7 +33,7 @@ VertexShaderOutput MainVS(in VertexShaderInputTx input)
 	float4 worldPosition = mul(input.Position, World);
 	float4 viewPosition = mul(worldPosition, View);
 	output.Position = mul(viewPosition, Projection);
-	output.WorldPosition = input.Position;
+	output.WorldPosition = output.Position;
 	output.Normal = input.Normal;
 
 	return output;
@@ -213,12 +213,12 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 	float t2;
 	findIntersection(CameraPosition, d, t1, t2);
 	float t;
-	//findQubicSolution(CameraPosition, d, t1, t2, t);
+	findQubicSolution(CameraPosition, d, t1, t2, t);
 	float3 p = CameraPosition + d * t;
 	float3 v = normalize(-d);
 	float3 n = getNormal(p);
 
-	return float4(1, 0, 0, 1);// *(0.1 + 0.4 * abs(dot(n, v)) + 0.5 * pow(abs(dot(n, v)), 20));
+	return float4(1, 0, 0, 1) *(0.1 + 0.4 * abs(dot(n, v)) + 0.5 * pow(abs(dot(n, v)), 20));
 }
 
 technique BasicColorDrawing
