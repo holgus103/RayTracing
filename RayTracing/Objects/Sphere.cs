@@ -13,67 +13,96 @@ using _3DGraphics.Core.Objects.Commons;
 
 namespace RayTracing.Objects
 {
-    class Sphere : Base, IModelObject
+    class Sphere : Base
     {
-        class MyIsland : Island
-        {
-            public MyIsland(ContentManager ctx, float noise, float curvyness, int degree, float radius, GraphicsDevice dev, Vector3 position, float xRotation, float yRotation, float zRotation)
-                : base(ctx, noise, curvyness, degree, radius, dev, position, xRotation, yRotation, zRotation)
-            {
-            }
 
-            protected override string Technique => "BasicColorDrawing";
-            public override EffectBase Effect => Sphere.effect;
-
-            public override void Draw(Matrix view, Matrix projection, Vector3 pos)
-            {
-                Effect.GraphicsDevice.RasterizerState = new RasterizerState() { CullMode = CullMode.None };
-                Effect.CurrentTechnique = Effect.Techniques[this.Technique];
-                Effect.CameraPosition = pos;
-                Effect.World = this.getWorldMatrix();
-                Effect.View = view;
-                Effect.Projection = projection;
-                foreach (var pass in Effect.CurrentTechnique.Passes)
-                {
-                    pass.Apply();
-                    Effect.GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionNormalColor>(PrimitiveType.TriangleList, this.vertices, 0, this.vertices.Length, Enumerable.Range(0, this.vertices.Length).ToArray(), 0, this.vertices.Length / 3);
-
-                }
-                Effect.GraphicsDevice.RasterizerState = new RasterizerState() { CullMode = CullMode.CullClockwiseFace };
-            }
-
-            protected override void initEffect(ContentManager ctx)
-            {
-            }
-        }
-        private static Model model;
         private static RayTracingEffect effect;
-        private Island i2;
-        private Island i1;
-        public Model Model => Sphere.model;
+        private VertexPositionNormalColor[] vertices;
         public override EffectBase Effect => Sphere.effect;
 
         protected override string Technique => "BasicColorDrawing";
 
-        protected override void initEffect(ContentManager ctx) 
+        protected override void initEffect(ContentManager ctx)
         {
             Sphere.effect = new RayTracingEffect(ctx);
         }
 
-        public Sphere(ContentManager ctx, Vector3 position, float scale) : base(ctx, position, 0, 0, 0, scale)
+        private Vector3 getNormalVector(Vector3 point)
         {
-            this.i1 = new MyIsland(ctx, 0, 0, 10, 4, effect.GraphicsDevice, new Vector3(0, 0, 0), 0, 0, 0);
-            this.i2 = new MyIsland(ctx, 0, 0, 10, 4, effect.GraphicsDevice, new Vector3(0, 0, 0), 180, 0, 0);
-            //if (Sphere.model == null)
-            //{
-            //    Sphere.model = ctx.Load<Model>("Models\\sphere");
-            //}
+            var normal = new Vector3(point.X, point.Y, point.Z);
+            normal.Normalize();
+            return normal;
+        }
+
+        public Sphere(ContentManager ctx, Vector3 position, float scale, int degree, float radius) : base(ctx, position, 0, 0, 0, scale)
+        {
+            this.vertices = new VertexPositionNormalColor[2 * (360 / degree + 1) * (90 / degree + 1) * 6];
+            var fragmentVertices = new List<Vector3>(90 / degree + 1);
+            var v1 = new Vector3(radius, 0, 0);
+            for (var i = 0; i <= 90 / degree; i++)
+            {
+                fragmentVertices.Add(Vector3.Transform(v1, Matrix.CreateRotationZ(MathHelper.ToRadians(degree * i))));
+            }
+
+            for (var i = 0; i < 360 / degree; i++)
+            {
+                var f1 = fragmentVertices.Select(e =>
+                        Vector3.Transform(e, Matrix.CreateRotationY(MathHelper.ToRadians(i * degree))))
+                    .Select(v => new Vector3(v.X, v.Y, v.Z))
+                    .ToList();
+                var f2 = fragmentVertices.Select(e =>
+                        Vector3.Transform(e, Matrix.CreateRotationY(MathHelper.ToRadians((i + 1) * degree))))
+                    .Select(v => new Vector3(v.X, v.Y, v.Z))
+                    .ToList();
+
+                for (var j = 0; j < 90 / degree; j++)
+                {
+                    var currentVertexNumber = i * 90 / degree * 6 + j * 6;
+                    var normal = this.getNormalVector(f1[0 + j]);
+                    this.vertices[currentVertexNumber] =
+                        new VertexPositionNormalColor(f1[0 + j], normal, Color.SandyBrown);
+                    normal = this.getNormalVector(f2[0 + j]);
+                    this.vertices[currentVertexNumber + 2] =
+                        new VertexPositionNormalColor(f2[0 + j], normal, Color.SandyBrown);
+                    normal = this.getNormalVector(f1[1 + j]);
+                    this.vertices[currentVertexNumber + 1] =
+                        new VertexPositionNormalColor(f1[1 + j], normal, Color.SandyBrown);
+
+                    normal = this.getNormalVector(f1[1 + j]);
+                    this.vertices[currentVertexNumber + 4] =
+                        new VertexPositionNormalColor(f1[1 + j], normal, Color.SandyBrown);
+                    normal = this.getNormalVector(f2[0 + j]);
+                    this.vertices[currentVertexNumber + 3] =
+                        new VertexPositionNormalColor(f2[0 + j], normal, Color.SandyBrown);
+                    normal = this.getNormalVector(f2[1 + j]);
+                    this.vertices[currentVertexNumber + 5] =
+                        new VertexPositionNormalColor(f2[1 + j], normal, Color.SandyBrown);
+                }
+            }
+            for (var i = 0; i < (360 / degree + 1) * (90 / degree + 1) * 6; i++)
+            {
+                var v = this.vertices[i];
+                this.vertices[i + (360 / degree + 1) * (90 / degree + 1) * 6] = new VertexPositionNormalColor
+                (
+                    new Vector3(v.Position.X, -v.Position.Y, v.Position.Z),
+                    new Vector3(v.Normal.X, -v.Normal.Y, v.Normal.Z),
+                    v.Color
+                );
+            }
+
         }
 
         public override void Draw(Matrix view, Matrix projection, Vector3 pos)
         {
-            this.i1.Draw(view, projection, pos);
-            this.i2.Draw(view, projection, pos);
+            Effect.GraphicsDevice.RasterizerState = new RasterizerState() {CullMode = CullMode.None};
+            base.Draw(view, projection, pos);
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                Effect.GraphicsDevice.DrawUserIndexedPrimitives<VertexPositionNormalColor>(PrimitiveType.TriangleList, this.vertices, 0, this.vertices.Length, Enumerable.Range(0, this.vertices.Length).ToArray(), 0, this.vertices.Length / 3);
+
+            }
+            Effect.GraphicsDevice.RasterizerState = new RasterizerState() { CullMode = CullMode.CullClockwiseFace };
         }
     }
 }
