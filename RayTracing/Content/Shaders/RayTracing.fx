@@ -11,7 +11,8 @@
 matrix World;
 matrix Projection;
 matrix View;
-float3 CameraPosition : register(c0);
+float3 CameraPosition;
+float Multiplier  : register(c0);
 static const float PI = 3.14159265f;
 struct VertexShaderInputTx
 {
@@ -216,9 +217,9 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 	findQubicSolution(CameraPosition, d, t1, t2, t);
 	float3 p = CameraPosition + d * t;
 	float3 v = normalize(-d);
-	float3 n = getNormal(p);
-
-	return float4(1, 0, 0, 1) * (0.1 + 0.4 * abs(dot(n, v)) + 0.5 * pow(abs(dot(n, v)), 20));
+	float3 n = normalize(getNormal(p));
+	Multiplier = (0.1 + 0.4 * abs(dot(n, v)) + 0.5 * pow(abs(dot(n, v)), 20));
+	return float4(1, 0, 0, 1) * Multiplier; 
 }
 
 technique BasicColorDrawing
