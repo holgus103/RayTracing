@@ -63,6 +63,10 @@ void findIntersection(float3 cam, float3 d, out float t1, out float t2)
 			t2 = t1;
 			t1 = temp;
 		}
+		if(t1 < 0)
+		{
+			t1 = 0;
+		}
 	}
 	else
 	{
@@ -78,46 +82,61 @@ bool belongs(float z0, float t1, float t2)
 void findQubicSolution(float3 cam, float3 d, float t1, float t2, out float z) 
 {
 	float a3 = 4 * d.x * d.x * d.x 
-		- 4 * d.z * d.z * d.z 
-		- 12 * d.x * d.y * d.y 
+		- 12 * d.x * d.y * d.y
+		- 7 * d.z * d.z * d.z 
 		+ 3 * d.x * d.x * d.z 
 		+ 3 * d.y * d.y * d.z;
 
+
 	float a2 = 12 * cam.x * d.x * d.x
-		- 21 * cam.z * d.z * d.z
-		- 12 * d.y * d.y * cam.x
-		- 24 * d.x * d.y * cam.y
+		+ 12 * d.x * d.x
+		- 12 * cam.x * d.y * d.y
+		- 24 * d.x * cam.y * d.y
+		+ 12 * d.x * d.x
 		+ 3 * d.x * d.x * cam.z
-		+ 6 * cam.x * d.x * d.z
 		+ 3 * d.y * d.y * cam.z
-		+ 6 * d.y * d.z * cam.y
-		- 6 * d.x * d.x
-		- 6 * d.y * d.y
-		- 4 * d.z * d.z;
+		+ 6 * cam.x * d.x * d.z
+		+ 6 * d.y * cam.y * d.z
+		- 18 * d.x * d.x 
+		- 18 * d.y * d.y
+		- 7 * d.z * d.z * cam.z
+		- 4 * d.z * cam.z 
+		- 14 * cam.z * d.z * d.z;
 
 	float a1 = 12 * cam.x * cam.x * d.x
-		- 12 * cam.z * cam.z * d.z
 		- 24 * d.y * cam.y * cam.x
 		- 12 * d.x * cam.y * cam.y
+		+ 24 * cam.x * d.x
+		+ 24 * d.y
+		
 		+ 6 * cam.x * d.x * cam.z
-		+ 3 * cam.x * cam.x * d.z
 		+ 6 * d.y * cam.y * cam.z
+		+ 3 * cam.x * cam.x * d.z
 		+ 3 * cam.y * cam.y * d.z
-		- 12 * d.x
-		- 12 * d.y
-		- 8 * d.z * cam.z
-		- 3 * d.z;
+		- 36 * cam.x * d.x 
+		- 36 * cam.y * d.y
+
+		- 4 * d.z * cam.z
+		- 14 * cam.z * cam.z * d.z
+		- 3 * d.z
+		- 4 * d.z * cam.z
+		- 7 * cam.z * cam.z * d.z;
+
 
 	float a0 = 4 * cam.x * cam.x * cam.x
-		- 7 * cam.z * cam.z * cam.z
+		+ 12 * cam.x * cam.x
 		- 12 * cam.y * cam.y * cam.x
+		+ 12 * cam.y * cam.y
+		- 2
+
 		+ 3 * cam.x * cam.x * cam.z
 		+ 3 * cam.y * cam.y * cam.z
-		- 6 * cam.x * cam.x
-		- 6 * cam.y * cam.y
+		- 18 * cam.x * cam.x
+		- 18 * cam.y * cam.y
+
+		- 7 * cam.z * cam.z * cam.z
 		- 4 * cam.z * cam.z
-		- 3 * cam.z
-		- 2;
+		- 3 * cam.z;
 
 	float b2 = a2 / a3;
 	float b1 = a1 / a3;
@@ -218,8 +237,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 	float3 p = CameraPosition + d * t;
 	float3 v = normalize(-d);
 	float3 n = normalize(getNormal(p));
-	Multiplier = (0.1 + 0.4 * abs(dot(n, v)) + 0.5 * pow(abs(dot(n, v)), 20));
-	return float4(1, 0, 0, 1) * Multiplier; 
+	return float4(1, 0, 0, 1) * (0.1 + 0.4 * abs(dot(n, v)) + 0.5 * pow(abs(dot(n, v)), 20));
 }
 
 technique BasicColorDrawing
