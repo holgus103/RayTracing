@@ -81,62 +81,62 @@ bool belongs(float z0, float t1, float t2)
 
 void findQubicSolution(float3 cam, float3 d, float t1, float t2, out float z) 
 {
-	float a3 = 4 * d.x * d.x * d.x 
-		- 12 * d.x * d.y * d.y
-		- 7 * d.z * d.z * d.z 
-		+ 3 * d.x * d.x * d.z 
-		+ 3 * d.y * d.y * d.z;
+	float a3 = 4 * d.x * d.x * d.x
+		- 12 * d.x * d.y *d.y
 
+		- 3 * d.z * d.x * d.x
+		- 3 * d.z * d.y * d.y
+
+		- 7* d.z * d.z * d.z;
 
 	float a2 = 12 * cam.x * d.x * d.x
 		+ 12 * d.x * d.x
 		- 12 * cam.x * d.y * d.y
 		- 24 * d.x * cam.y * d.y
-		+ 12 * d.x * d.x
-		+ 3 * d.x * d.x * cam.z
-		+ 3 * d.y * d.y * cam.z
-		+ 6 * cam.x * d.x * d.z
-		+ 6 * d.y * cam.y * d.z
-		- 18 * d.x * d.x 
+		+ 12 * d.y * d.y
+
+		+ 3 * cam.z * d.x * d.x
+		- 6 * d.z * cam.x * d.x
+		- 18 * d.x * d.x
+		+ 3 * cam.z * d.y * d.y
+		- 6 * d.z * cam.y * d.y
 		- 18 * d.y * d.y
-		- 7 * d.z * d.z * cam.z
-		- 4 * d.z * cam.z 
-		- 14 * cam.z * d.z * d.z;
+
+		- 4 * d.z * d.z
+		- 21 * cam.z * d.z * d.z;
+
 
 	float a1 = 12 * cam.x * cam.x * d.x
-		- 24 * d.y * cam.y * cam.x
-		- 12 * d.x * cam.y * cam.y
 		+ 24 * cam.x * d.x
-		+ 24 * d.y
-		
-		+ 6 * cam.x * d.x * cam.z
-		+ 6 * d.y * cam.y * cam.z
-		+ 3 * cam.x * cam.x * d.z
-		+ 3 * cam.y * cam.y * d.z
-		- 36 * cam.x * d.x 
+		- 24 * cam.x * cam.y * d.y
+		- 12 * d.x * cam.y * cam.y
+		+ 24 * cam.y * d.y
+
+		+ 6 * cam.z * cam.x * d.x
+		- 3 * d.z * cam.x * cam.x
+		- 36 * cam.x * d.x
+		+ 6 * cam.z * cam.y * d.y
+		- 3 * d.z * cam.y * cam.y
 		- 36 * cam.y * d.y
 
-		- 4 * d.z * cam.z
-		- 14 * cam.z * cam.z * d.z
 		- 3 * d.z
-		- 4 * d.z * cam.z
-		- 7 * cam.z * cam.z * d.z;
+		- 8 * cam.z * d.z
+		- 21 * cam.z * cam.z * d.z;
 
 
 	float a0 = 4 * cam.x * cam.x * cam.x
 		+ 12 * cam.x * cam.x
-		- 12 * cam.y * cam.y * cam.x
+		- 12 * cam.x * cam.y * cam.y
 		+ 12 * cam.y * cam.y
-		- 2
 
-		+ 3 * cam.x * cam.x * cam.z
-		+ 3 * cam.y * cam.y * cam.z
+		+ 3 * cam.z * cam.x * cam.x
 		- 18 * cam.x * cam.x
+		+ 3 * cam.z * cam.y * cam.y
 		- 18 * cam.y * cam.y
 
-		- 7 * cam.z * cam.z * cam.z
+		- 3 * cam.z
 		- 4 * cam.z * cam.z
-		- 3 * cam.z;
+		- 7 * cam.z * cam.z * cam.z;
 
 	float b2 = a2 / a3;
 	float b1 = a1 / a3;
